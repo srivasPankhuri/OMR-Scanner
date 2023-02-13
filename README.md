@@ -19,4 +19,4 @@ Step #7: Repeat for all questions in the exam.
 
 - [argparse](https://towardsdatascience.com/learn-enough-python-to-be-useful-argparse-e482e1764e05)
 - [imutils](https://github.com/PyImageSearch/imutils)
-- [opencv]()
+- [opencv](https://docs.opencv.org/4.x/db/deb/tutorial_display_image.html)

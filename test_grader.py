@@ -50,3 +50,7 @@ if len(cnts)>0:
             docCnt=approx
             break
 
+# Apply a four point perspective transform to both the original image and grayscale image to obtain a top-down birds eye view of the paper
+paper=four_point_transform(image,docCnt.reshape(4,2))
+warped=four_point_transform(gray,docCnt.reshape(4,2))
+

@@ -81,16 +81,48 @@ for c in cnts:
     if w>=20 and h>=20 and ar>=0.9 and ar<=1.1:
         questionCnts.append(c)
 
-# loop over the sorted contours
-for(j,c) in  enumerate(cnts):
-    #construct a mask that reveals only the current "bubble" for the question
-    mask=np.zeros(thresh.shape,dtype="uint8")
-    cv2.drawContours(mask,[c],-1,255,-1)
+# Sort the question contours top-to-bottom, then initialize the total number of correct naswers
+questionCnts = contours.sort_contours(questionCnts, method="top-to-bottom")[0]
+correct=0
 
-    #apply the mask to the thresholded image, then count the number of non-zeros pixels in the bubble area
-    mask=cv2.bitwise_and(thresh,thresh,mask=mask)
-    total=cv2.countNonZero(mask)
+# each question has 5 possible answers, to loop over the question in batches of 5
+for (q,i) in enumerate(np.arange(0,len(questionCnts),5)):
+    # sort the contojurs for the current question from left to right, then initialize the index of the bubbled answer
+    cnts=contours.sort_contours(questionCnts[i:i+5])[0]
+    bubbled=None
 
-    #if the current total has a larger number of total non-zero pixels, then we are examining the currently bubbled-in answer
-    if bubbled is None or total>bubbled[0]:
-        bubbled=(total,j)
+
+    # loop over the sorted contours
+    for(j,c) in  enumerate(cnts):
+        #construct a mask that reveals only the current "bubble" for the question
+        mask=np.zeros(thresh.shape,dtype="uint8")
+        cv2.drawContours(mask,[c],-1,255,-1)
+
+        #apply the mask to the thresholded image, then count the number of non-zeros pixels in the bubble area
+        mask=cv2.bitwise_and(thresh,thresh,mask=mask)
+        total=cv2.countNonZero(mask)
+
+        #if the current total has a larger number of total non-zero pixels, then we are examining the currently bubbled-in answer
+        if bubbled is None or total>bubbled[0]:
+            bubbled=(total,j)
+
+
+    # Initialize the contour color and the index of the "Correct" answer
+    color=(0,0,255)
+    k=ANSWER_KEY[q]
+
+    # Check to see if the bubbled answer is correct
+    if k==bubbled[1]:
+        color=(0,255,0)
+        correct+=1
+
+    # Draw the outline of the correct answer on the test
+    cv2.drawContours(paper,[cnts[k]],-1,color,3)
+
+
+score=(correct/5.0)*100.0
+print("[INFO] score: {:.2f}%".format(score))
+cv2.putText(paper,"{:.2f}%".format(score),(10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255),2)
+cv2.imshow("ORIGINAL",image)
+cv2.imshow("EXAM",paper)
+cv2.waitKey(0)

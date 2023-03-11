@@ -29,6 +29,7 @@ blurred=cv2.GaussianBlur(gray,(5,5),0)
 edged=cv2.Canny(blurred,75,200)
 
 cv2.imshow("Silhouette Image",edged)
+cv2.waitKey(0)
 
 
 # Finding contours in the edge map
@@ -43,7 +44,7 @@ if len(cnts)>0:
     for c in cnts:
         # Approximate the contour
         peri=cv2.arcLength(c,True)
-        approx=cv2.approxPloyDP(c,0.02*peri,True)
+        approx=cv2.approxPolyDP(c,0.02*peri,True)
 
         # If our approximated contour has four points, then we assume that we have found the test sheet
         if len(approx)==4:
@@ -53,4 +54,43 @@ if len(cnts)>0:
 # Apply a four point perspective transform to both the original image and grayscale image to obtain a top-down birds eye view of the paper
 paper=four_point_transform(image,docCnt.reshape(4,2))
 warped=four_point_transform(gray,docCnt.reshape(4,2))
+cv2.imshow("Bird Eye",paper)
+cv2.waitKey(0)
+cv2.imshow("Bird Eye2",warped)
+cv2.waitKey(0)
 
+
+#Binarization
+#Apply Otsu's thresholding method to binarize the warped piece of paper
+thresh= cv2.threshold(warped,0,255,cv2.THRESH_BINARY_INV|cv2.THRESH_OTSU)[1]
+cv2.imshow("Thresh",thresh)
+cv2.waitKey(0)
+
+#Find contours in the thresholded image, then initiaalize the list of contours that correspond to questions
+cnts=cv2.findContours(thresh.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+cnts=imutils.grab_contours(cnts)
+
+questionCnts=[]
+
+#loop over the contours
+for c in cnts:
+    #compute the bounding box of teh contour, then use the bounding box to derive the aspect ratio
+    (x,y,w,h)=cv2.boundingRect(c)
+    ar=w/float(h)
+    #in order to label the contour as a question,region should be suffeciently wide, sufficiently tall, and have an aspect ratio approximately equal to 1
+    if w>=20 and h>=20 and ar>=0.9 and ar<=1.1:
+        questionCnts.append(c)
+
+# loop over the sorted contours
+for(j,c) in  enumerate(cnts):
+    #construct a mask that reveals only the current "bubble" for the question
+    mask=np.zeros(thresh.shape,dtype="uint8")
+    cv2.drawContours(mask,[c],-1,255,-1)
+
+    #apply the mask to the thresholded image, then count the number of non-zeros pixels in the bubble area
+    mask=cv2.bitwise_and(thresh,thresh,mask=mask)
+    total=cv2.countNonZero(mask)
+
+    #if the current total has a larger number of total non-zero pixels, then we are examining the currently bubbled-in answer
+    if bubbled is None or total>bubbled[0]:
+        bubbled=(total,j)

@@ -24,6 +24,7 @@ Step #7: Repeat for all questions in the exam.
 
 ### How to run the python file:
 - Fork and Clone this repository in your local system.
+  ![Uploading image.png…]()
 - Open the directory of the project folder in Command Prompt.
   ![image](https://user-images.githubusercontent.com/84925346/224492161-bb5c9f0b-924f-4b49-850f-e783efd9bde5.png)
 - Make sure all the Libraries are installed and up-to-date.
